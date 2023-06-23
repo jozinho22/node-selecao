@@ -3,7 +3,7 @@ const dbConfig = require("../../config.json")[process.env.NODE_ENV];
 const { Op } = require("sequelize");
 
 module.exports = (app, studentsTable) => {
-
+    
     app.get('/', (req, res) => {
         res.send('Hello express');
     })
@@ -19,6 +19,7 @@ module.exports = (app, studentsTable) => {
                 const message = `Voici la liste des étudiants`;
                 res.json(success(message, students));
             })
+            .catch(err => res.send(err))
     })
 
     app.get('/api/students/:id', (req, res) => {
@@ -28,61 +29,71 @@ module.exports = (app, studentsTable) => {
                 const message = `L\'étudiant ${student.name} existe bien`;
                 res.json(success(message, student));
             })
+            .catch(err => res.send(err))
     })
 
     app.post('/api/students/', (req, res) => {
         var newStudents = [];
         for(var student of req.body.students) {
-            const newStudent = {
+            newStudents.push(
+                {
                 ...student,
                 ...{createdAt: new Date(), createdBy: dbConfig.username}
-            }
-            newStudents.push(newStudent);
+                }
+            )
         }
         
-        studentsTable.bulkCreate(newStudents)
-        const message = `Les étudiants ont bien été créés !`;
-        res.json(success(message, req.body.students));
+        studentsTable
+            .bulkCreate(newStudents)
+            .then(students => {
+                const message = `Les étudiants ont bien été créés !`;
+                res.json(success(message, students));
+            })
+            .catch(err => res.send(err))
     })
 
     app.put('/api/students/', (req, res) => {
         var updatedStudents = [];
         for(var student of req.body.students) {
-            const updatedStudent = {
+            updatedStudents.push(
+                {
                 ...student,
-                ...{updatedAd: new Date(), updatedBy: dbConfig.username}
-            }
-            updatedStudents.push(updatedStudent);
+                ...{updatedAt: new Date(), updatedBy: dbConfig.username}
+                }
+            )
         }
 
-         updatedStudents.map(student => {
-                studentsTable.update(
-                    student,
-                    {
-                        where: {
-                            id: student.id
-                        }
-                    }
-                )
-        })
-        
-        const message = `Les étudiants ci-dessous ont bien été modifiés`;
-        res.json(success(message, updatedStudents));
-    })
+        studentsTable
+            .bulkCreate(
+                updatedStudents,
+                { 
+                    updateOnDuplicate: Object.keys(studentsTable.getAttributes()).map(attr => attr)
+                }
+            )
+            .then(students => {
+                const message = `Les étudiants ci-dessous ont bien été modifiés ou ajoutés s'ils n\'existaient pas auparavant`;    
+                res.json(success(message, {students}));
+            })
+            .catch(err => res.send(err));
+    }) 
 
     app.delete('/api/students/', (req, res) => {
         var studentsIdToDelete = req.body.students.map(student => student.id)
 
-        studentsTable.destroy(
-            {
-                where: {
-                    id: {
-                        [Op.or]: studentsIdToDelete
+        studentsTable
+            .destroy(
+                {
+                    where: {
+                        id: {
+                            [Op.or]: studentsIdToDelete
+                        }
                     }
                 }
+            )
+            .then(nbDestroyed => {
+                const message = `${nbDestroyed} étudiants ont bien été supprimés !!!`;
+                res.json(success(message, studentsIdToDelete));
             })
-        
-        const message = `Les étudiants ont bien été supprimés !!!`;
-        res.json(success(message, studentsIdToDelete));
+            .catch(err => {res.send(err)})
     })
 }

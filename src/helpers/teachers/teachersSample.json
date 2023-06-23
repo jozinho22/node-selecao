@@ -1,0 +1,22 @@
+{
+  "teachers": [
+    {
+      "name": "Dunga",
+      "age": 62,
+      "discipline": "football",
+      "studentId": 1
+    },
+    {
+      "name": "Zagallo",
+      "age": 45,
+      "discipline": "football",
+      "studentId": 1
+    },
+    {
+      "name": "Scolari",
+      "age": 56,
+      "discipline": "football",
+      "studentId": 1
+    }
+  ]
+}
