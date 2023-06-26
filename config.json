@@ -11,7 +11,8 @@
     "password": "jozinho",
     "database": "school",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "timezone": "+02:00"
   },
   "test": {
     "username": "root",

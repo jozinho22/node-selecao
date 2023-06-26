@@ -1,6 +1,11 @@
-exports.success = (message, data) => {
+exports.success = (message, data, token) => {
     return {
         message,
-        data
+        data,
+        token
     }
+}
+
+exports.tableNameOnSingular = (tableName) => {
+    return tableName.substring(0, tableName.length - 1)
 }

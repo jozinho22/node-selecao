@@ -1,14 +1,15 @@
-const {success} = require('../helpers/helpers.js');
+const {success, tableNameOnSingular} = require('../helpers/helpers.js');
 const dbConfig = require("../../config.json")[process.env.NODE_ENV];
 const { Op, ValidationError, UniqueConstraintError, AggregateError } = require("sequelize");
+const auth = require('../auth/auth.js');
 
 module.exports = (app, table) => {
 
     var tableName = table.getTableName(); 
-    var tableNameSingular = tableName.substring(0, tableName.length - 1)
+    var tableNameSingular = tableNameOnSingular(tableName);
     
     // GET récupérer tous les éléments
-    app.get(`/api/${tableName}/`, (req, res) => {
+    app.get(`/api/${tableName}`, auth, (req, res) => {
         const request = {}
         req.query.name ? request.where = {name: req.query.name} : '';
         request.order = [['id', 'DESC']] 
@@ -27,7 +28,7 @@ module.exports = (app, table) => {
     })
 
     // GET récupérer un élément par son Id
-    app.get(`/api/${tableName}/:id`, (req, res) => {
+    app.get(`/api/${tableName}/:id`, auth, (req, res) => {
         table
             .findByPk(req.params.id)
             .then(item => {
@@ -46,12 +47,13 @@ module.exports = (app, table) => {
     })
 
     // POST créer un élément
-    app.post(`/api/${tableName}/create`, (req, res) => {
+    app.post(`/api/${tableName}/new`, auth, (req, res) => {
         var newItem = {
                 ...req.body[tableNameSingular],
                 ...{createdAt: new Date(), createdBy: dbConfig.username}
                 };
                
+        console.log(newItem)
         table
             .create(newItem)
             .then(item => {
@@ -59,6 +61,8 @@ module.exports = (app, table) => {
                 return res.json(success(message, item));
             })
             .catch(err => {
+                                console.log(err)
+
                 if(err instanceof ValidationError) {
                     return res.status(400).json(success(err.message, err))
                 } 
@@ -73,7 +77,7 @@ module.exports = (app, table) => {
     })
 
     // POST créer un ou plusieurs éléments à partir d'un tableau
-    app.post(`/api/${tableName}/`, (req, res) => {
+    app.post(`/api/${tableName}`, auth, (req, res) => {
         var newItems = [];
 
         for(var item of req.body[tableName]) {
@@ -84,8 +88,6 @@ module.exports = (app, table) => {
                 }
             )
         }
-
-        console.log(newItems)
         
         table
             .bulkCreate(newItems, {validate: true })
@@ -112,7 +114,7 @@ module.exports = (app, table) => {
     })
 
     // PUT modifier un ou plusieurs éléments à partir d'un tableau
-    app.put(`/api/${tableName}/`, (req, res) => {
+    app.put(`/api/${tableName}`, auth, (req, res) => {
         var updatedItems = [];
         for(var item of req.body[tableName]) {
             updatedItems.push(
@@ -147,7 +149,7 @@ module.exports = (app, table) => {
     }) 
 
     // DELETE supprimer un élément par son id
-    app.delete(`/api/${tableName}/:id`, (req, res) => {    
+    app.delete(`/api/${tableName}/:id`, auth, (req, res) => {    
 
         table
             .findByPk(req.params.id)
@@ -173,7 +175,7 @@ module.exports = (app, table) => {
     })
 
     // DELETE supprimer un ou plusieurs éléments à partir d'un tableau d'Id
-    app.delete(`/api/${tableName}/`, (req, res) => {
+    app.delete(`/api/${tableName}`, auth, (req, res) => {
         var itemsIdToDelete = req.body[tableName].map(student => student.id)
         
         table

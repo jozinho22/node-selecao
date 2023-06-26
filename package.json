@@ -11,9 +11,11 @@
   "author": "jozinho22",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
     "cross-env": "^7.0.3",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
     "mariadb": "^3.2.0",
     "node-fetch": "^3.3.1",
     "pg": "^8.11.0",

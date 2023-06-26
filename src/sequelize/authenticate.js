@@ -17,7 +17,7 @@ module.exports = () => {
         .catch(err => console.error(`Erreur de connexion à la base... ${err} : `));
 
     sequelize
-        .sync(/* {force: true} */)
+        .sync({alter: true})
         .then(() => console.log(`Synchronisation réussie pour la base ${dbConfig.database}!`))
 
     return sequelize;
