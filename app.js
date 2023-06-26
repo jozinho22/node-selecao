@@ -38,7 +38,12 @@ genericCRUD(app, teachers);
 
 /* addItems(teachersSample, teachers);
 addItems(studentsSample, students);  */
-affectItemToSubItems(teachers, students)
+/* affectItemToSubItems(teachers, students)
+ */
+app.use(({res}) => {
+    const message = "Impossible de trouver la ressource demandée, veuillez essayer une autre URL";
+    res.status(404).json(message)
+})
 
 app.listen(port, () => {console.log(`listening on port : ${port}`)});
 

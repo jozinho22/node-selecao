@@ -1,8 +1,6 @@
 const {DataTypes} = require('sequelize');
-const Teacher = require('./TeacherModel')
 
 module.exports = (sequelize) => {
-
     return sequelize.define('student',
         {
             id: {
@@ -12,11 +10,19 @@ module.exports = (sequelize) => {
             },
             name : {
                 type: DataTypes.STRING,
-                allowNull: false
+                allowNull: false,
+                unique: {msg: 'Ce nom est déjà pris'}, 
+                validate: {
+                    notNull: {msg: 'Le name ne peut être NULL'},
+                    notEmpty: {msg: 'Ce champ ne peut être vide'},
+                }
             },
-            age: {
+            age: { 
                 type: DataTypes.INTEGER,
-                allowNull: false
+                allowNull: false,
+                validate: {
+                    isInt: true
+                }
             }
         },
         {

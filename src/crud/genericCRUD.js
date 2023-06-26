@@ -1,35 +1,78 @@
 const {success} = require('../helpers/helpers.js');
 const dbConfig = require("../../config.json")[process.env.NODE_ENV];
-const { Op } = require("sequelize");
+const { Op, ValidationError, UniqueConstraintError, AggregateError } = require("sequelize");
 
 module.exports = (app, table) => {
 
     var tableName = table.getTableName(); 
+    var tableNameSingular = tableName.substring(0, tableName.length - 1)
     
+    // GET récupérer tous les éléments
     app.get(`/api/${tableName}/`, (req, res) => {
+        const request = {}
+        req.query.name ? request.where = {name: req.query.name} : '';
+        request.order = [['id', 'DESC']] 
         table
-            .findAll({
-                order: [
-                    ['id', 'ASC']
-                ],
-            })
+            .findAll(
+                request
+            )
             .then(items => {
                 const message = `Voici la liste des ${tableName}`;
-                res.json(success(message, items));
+                return res.json(success(message, items));
             })
-            .catch(err => res.send(err))
+            .catch(err => {
+                const message = `La liste des ${tableName} n'a pas pu être récupéré.`;
+                return res.status(500).json(success(message, err));
+            })
     })
 
+    // GET récupérer un élément par son Id
     app.get(`/api/${tableName}/:id`, (req, res) => {
         table
             .findByPk(req.params.id)
             .then(item => {
-                const message = `Le ${table} avec l\'id ${item.id} existe bien`;
-                res.json(success(message, item));
+                if(item === null) {
+                    const message = `Le ${tableNameSingular} avec l\'id ${req.params.id} n'existe pas`;
+                    return res.status(404).json(success(message, item));
+                }
+                const message = `Le ${tableNameSingular} avec l\'id ${item.id} existe bien`;
+                return res.json(success(message, item));
             })
-            .catch(err => res.send(err))
+            .catch(err => {
+                console.log(err)
+                const message = `Le ${tableNameSingular} n'a pas pu être récupéré.`;
+                return res.status(500).json(success(message, err));
+            })
     })
 
+    // POST créer un élément
+    app.post(`/api/${tableName}/create`, (req, res) => {
+        var newItem = {
+                ...req.body[tableNameSingular],
+                ...{createdAt: new Date(), createdBy: dbConfig.username}
+                };
+               
+        table
+            .create(newItem)
+            .then(item => {
+                const message = `Le ${tableNameSingular} a bien été créé !`;
+                return res.json(success(message, item));
+            })
+            .catch(err => {
+                if(err instanceof ValidationError) {
+                    return res.status(400).json(success(err.message, err))
+                } 
+                if(err instanceof UniqueConstraintError) {
+                    return res.status(400).json(success(err.message, err))
+                }
+                
+                const message = `Le ${tableNameSingular} n'a pu être créé.`;
+                return res.status(500).json(success(message, err));
+          
+            })
+    })
+
+    // POST créer un ou plusieurs éléments à partir d'un tableau
     app.post(`/api/${tableName}/`, (req, res) => {
         var newItems = [];
 
@@ -41,25 +84,36 @@ module.exports = (app, table) => {
                 }
             )
         }
+
+        console.log(newItems)
         
         table
-            .bulkCreate(newItems)
+            .bulkCreate(newItems, {validate: true })
             .then(items => {
-                const message = `Les ${tableName}s ont bien été créés !`;
-                res.json(success(message, items));
+                const message = `Les ${tableName} ont bien été créés !`;
+                return res.json(success(message, items));
             })
             .catch(err => {
+                if(err instanceof AggregateError) {
+                    return res.status(400).json(success(err.message, err))
+                } 
+                if(err instanceof UniqueConstraintError) {
+                    return res.status(400).json(success(err.message, err))
+                }
                 console.log('---------------------------');
                 console.log('ERREUR LORS DE l INSERTION: ' + tableName);
                 console.log(err);
                 console.log('---------------------------');
-                res.send(err)
+                
+                const message = `Les ${tableName} n'ont pas pu être créés.`;
+                return res.status(500).json(success(message, err));
+          
             })
     })
 
+    // PUT modifier un ou plusieurs éléments à partir d'un tableau
     app.put(`/api/${tableName}/`, (req, res) => {
         var updatedItems = [];
-        console.log(req.body[tableName])
         for(var item of req.body[tableName]) {
             updatedItems.push(
                 {
@@ -78,11 +132,47 @@ module.exports = (app, table) => {
             )
             .then(items => {
                 const message = `Les ${tableName} ci-dessous ont bien été modifiés ou ajoutés s'ils n\'existaient pas auparavant`;    
-                res.json(success(message, {items}));
+                return res.json(success(message, {items}));
             })
-            .catch(err => res.send(err));
+            .catch(err => {
+                if(err instanceof AggregateError) { 
+                    return res.status(400).json(success(err.message, err))
+                } 
+                if(err instanceof UniqueConstraintError) {
+                    return res.status(400).json(success(err.message, err))
+                }
+                const message = `Les ${tableName} n'ont pas pu être mis à jour.`;
+                return res.status(500).json(success(message, err));
+            })
     }) 
 
+    // DELETE supprimer un élément par son id
+    app.delete(`/api/${tableName}/:id`, (req, res) => {    
+
+        table
+            .findByPk(req.params.id)
+            .then(student => {
+                let studentToReturn = student;
+
+                table
+                    .destroy({where: {id: req.params.id}})
+                    .then(nbDestroyed => {
+                        if(nbDestroyed === 0) {
+                            const message = `Aucun ${tableNameSingular} n'a été supprimé car non trouvé` ;
+                            return res.status(404).json(success(message, {})); 
+                        }
+                        const message = `Un ${tableNameSingular} a été supprimé`;
+                        return res.json(success(message, {student: studentToReturn}));
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        const message = `Le ${tableNameSingular} n'a pas pu être supprimé.`;
+                        return res.status(500).json(success(message, err));
+                    }) 
+             });
+    })
+
+    // DELETE supprimer un ou plusieurs éléments à partir d'un tableau d'Id
     app.delete(`/api/${tableName}/`, (req, res) => {
         var itemsIdToDelete = req.body[tableName].map(student => student.id)
         
@@ -97,9 +187,16 @@ module.exports = (app, table) => {
                 }
             )
             .then(nbDestroyed => {
-                const message = `${nbDestroyed === 0 ? `Aucun ${tableName.substring(0, tableName.length - 1)} n'a été supprimé car non trouvé(s)` : `${nbDestroyed} ${tableName.substring(0, tableName.length - 1)} a été supprimé${nbDestroyed > 1 ? 's' : ''}` }`;
-                res.json(success(message, itemsIdToDelete));
+                if(nbDestroyed === 0) {
+                    const message = `Aucun ${tableNameSingular} n'a été supprimé car non trouvé(s)` ;
+                    return res.status(404).json(success(message, {}));
+                }
+                const message = `${nbDestroyed} ${nbDestroyed === 1 ? `${tableNameSingular} a été supprimé` : `${tableName} ont été supprimés`}`;
+                return res.json(success(message, itemsIdToDelete));
             })
-            .catch(err => {res.send(err)})
+            .catch(err => {
+                const message = `Les ${tableName} n'ont pas pu être supprimés.`;
+                return res.status(500).json(success(message, err));
+            })
     })
 }

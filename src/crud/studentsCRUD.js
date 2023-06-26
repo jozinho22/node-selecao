@@ -8,7 +8,7 @@ module.exports = (app, studentsTable) => {
         res.send('Hello express');
     })
 
-    app.get('/api/students/', (req, res) => {
+    app.get('/api/students/', (req, res) => { 
         studentsTable
             .findAll({
                 order: [
