@@ -1,8 +1,7 @@
 const {DataTypes} = require('sequelize');
-const PersonModel = require('./PersonModel.js');
 
 module.exports = (sequelize) => {
-    return sequelize.define('student',
+    return sequelize.define('club',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -11,19 +10,7 @@ module.exports = (sequelize) => {
             },
             name : {
                 type: DataTypes.STRING,
-                allowNull: false,
-                unique: {msg: 'Ce nom est déjà pris'}, 
-                validate: {
-                    notNull: {msg: 'Le name ne peut être NULL'},
-                    notEmpty: {msg: 'Ce champ ne peut être vide'},
-                }
-            },
-            age: { 
-                type: DataTypes.INTEGER,
-                allowNull: false,
-                validate: {
-                    isInt: true
-                }
+                allowNull: false
             },
             createdBy:{
                 type: DataTypes.STRING,
@@ -43,7 +30,7 @@ module.exports = (sequelize) => {
             }
         },{
             /* createdAt: true, */
-            updatedAt: true,
+           /*  updatedAt: true, */
             timestamps: true
         }
     )

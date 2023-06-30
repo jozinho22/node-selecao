@@ -1,6 +1,7 @@
 const morgan = require('morgan');
 const serveFavicon = require('serve-favicon');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 module.exports = (app) => {
     // App middleware
@@ -10,9 +11,13 @@ module.exports = (app) => {
     }) */
 
     // External middlewares
+    process.env.NODE_ENV === 'developement' ?
+        app.use(morgan('dev'))
+            : ''
+
     app
-        .use(morgan('dev'))
         .use(serveFavicon(__dirname + '/assets/favicon-brasil-mini.png'))
         .use(bodyParser.json())
+        .use(cors())
 
 }

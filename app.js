@@ -5,7 +5,7 @@ const authenticate = require('./src/sequelize/authenticate.js')
 const initDb = require('./src/sequelize/initDb.js')
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 middlewares(app)
 initDb(app, authenticate());

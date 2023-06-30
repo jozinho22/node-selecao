@@ -20,6 +20,6 @@ module.exports = () => {
         .sync({alter: true})
         .then(() => console.log(`Synchronisation réussie pour la base ${dbConfig.database}!`))
 
-    return sequelize;
+    return sequelize; 
 
 }

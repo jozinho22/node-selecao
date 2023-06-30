@@ -1,19 +1,19 @@
 module.exports = {
-    teachers : [
+    coachs : [
         {
             name: "Dunga",
             age: 62,
-            discipline: "football"
+            clubId: 1
         },
         {
             name: "Zagallo",
             age: 45,
-            discipline: "football"
+            clubId: 2
         },
         {
             name: "Scolari",
             age: 56,
-            discipline: "football"
+            clubId: 3
         }
     ]
 }

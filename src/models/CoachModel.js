@@ -1,7 +1,7 @@
 const {DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    return sequelize.define('teacher',
+    return sequelize.define('coach',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -14,10 +14,6 @@ module.exports = (sequelize) => {
             },
             age: {
                 type: DataTypes.INTEGER,
-                allowNull: false
-            },
-            discipline: {
-                type: DataTypes.STRING,
                 allowNull: false
             },
             createdBy:{
@@ -36,6 +32,8 @@ module.exports = (sequelize) => {
                 type: DataTypes.DATE,
                 allowNull: true
             }
+        },{
+            tableName: 'coachs'
         },{
             /* createdAt: true, */
            /*  updatedAt: true, */

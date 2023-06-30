@@ -2,6 +2,7 @@ const {success, tableNameOnSingular} = require('../helpers/helpers.js');
 const dbConfig = require("../../config.json")[process.env.NODE_ENV];
 const { Op, ValidationError, UniqueConstraintError, AggregateError } = require("sequelize");
 const auth = require('../auth/auth.js');
+const createNewItems = require('./actions/createNewItems.js');
 
 module.exports = (app, table) => {
 
@@ -88,7 +89,7 @@ module.exports = (app, table) => {
                 }
             )
         }
-        
+        createNewItems(table, tableName, newItems);
         table
             .bulkCreate(newItems, {validate: true })
             .then(items => {
